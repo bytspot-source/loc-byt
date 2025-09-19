@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        ports:
+          - 5432:5432
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: bytspot
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22.x'
+
+      - name: Go mod tidy (services)
+        run: |
+          for d in services/*; do
+            if [ -f "$d/go.mod" ]; then (cd "$d" && go mod tidy); fi
+          done
+
+      - name: Unit tests (no DB)
+        run: |
+          cd services/auth-service
+          go test ./internal/server -v
+
+      - name: DB tests
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/bytspot?sslmode=disable
+        run: |
+          cd services/auth-service
+          go test ./internal/db -v
+
