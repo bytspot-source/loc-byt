@@ -1,5 +1,5 @@
 
-  # MatchSpot Location Discovery App
+  # BytSpot Location Discovery App
 
   This is a code bundle for MatchSpot Location Discovery App. The original project is available at https://www.figma.com/design/rigZa1HarTCiu5b8H71PqS/MatchSpot-Location-Discovery-App.
 
