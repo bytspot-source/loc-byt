@@ -56,7 +56,7 @@ jobs:
           echo "$IMAGE_URL" > image_url.txt
           docker build -t "$IMAGE_URL" -f services/auth-service/Dockerfile .
           docker push "$IMAGE_URL"
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: image-url
           path: image_url.txt
@@ -66,7 +66,7 @@ jobs:
     runs-on: ubuntu-22.04
     environment: staging
     steps:
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: image-url
       - uses: google-github-actions/auth@v2
@@ -94,7 +94,7 @@ jobs:
       name: production
       url: https://api.bytspot.com
     steps:
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: image-url
       - uses: google-github-actions/auth@v2
