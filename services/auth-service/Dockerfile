@@ -12,5 +12,5 @@ USER nonroot
 COPY --from=builder /app/apis/auth.openapi.yaml /apis/auth.openapi.yaml
 COPY --from=builder /app/services/auth-service/migrations /migrations
 COPY --from=builder /bin/auth /auth
-EXPOSE 8090
+EXPOSE 8080
 ENTRYPOINT ["/auth"]
