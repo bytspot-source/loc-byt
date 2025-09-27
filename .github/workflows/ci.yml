@@ -39,8 +39,6 @@ jobs:
     needs: build-test-scan
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-22.04
-    outputs:
-      image: ${{ steps.push.outputs.image }}
     steps:
       - uses: actions/checkout@v4
       - name: Auth to GCP (Workload Identity Federation)
@@ -55,8 +53,7 @@ jobs:
         name: Build & push API image
         run: |
           IMAGE="${{ env.REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ env.AR_REPO }}/bytspot-auth-service:${{ github.sha }}"
-          echo "IMAGE=$IMAGE" >> "$GITHUB_ENV"
-          echo "image=$IMAGE" >> "$GITHUB_OUTPUT"
+          echo "IMAGE=$IMAGE" >> $GITHUB_ENV
           docker build -t "$IMAGE" -f services/auth-service/Dockerfile .
           docker push "$IMAGE"
 
@@ -71,9 +68,11 @@ jobs:
           service_account: ${{ secrets.DEPLOYER_SERVICE_ACCOUNT }}
       - uses: google-github-actions/setup-gcloud@v2
       - name: Deploy to Cloud Run (staging)
+        env:
+          IMAGE: ${{ env.IMAGE }}
         run: |
           gcloud run deploy ${{ env.SERVICE_NAME }} \
-            --image "${{ needs.push-image.outputs.image }}" \
+            --image "$IMAGE" \
             --region ${{ env.REGION }} \
             --platform managed \
             --allow-unauthenticated \
@@ -95,9 +94,11 @@ jobs:
           service_account: ${{ secrets.DEPLOYER_SERVICE_ACCOUNT }}
       - uses: google-github-actions/setup-gcloud@v2
       - name: Promote image and deploy (manual)
+        env:
+          IMAGE: ${{ env.IMAGE }}
         run: |
           gcloud run deploy bytspot-prod-auth-service \
-            --image "${{ needs.push-image.outputs.image }}" \
+            --image "$IMAGE" \
             --region ${{ env.REGION }} \
             --platform managed \
             --allow-unauthenticated \
