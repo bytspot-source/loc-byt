@@ -64,7 +64,8 @@ jobs:
   deploy-staging:
     needs: push-image
     runs-on: ubuntu-22.04
-    environment: staging
+    environment:
+      name: staging
     steps:
       - uses: actions/download-artifact@v4
         with:
@@ -84,7 +85,7 @@ jobs:
             --allow-unauthenticated \
             --max-instances 2 \
             --service-account=${{ secrets.DEPLOYER_SERVICE_ACCOUNT }} \
-            --set-env-vars=ENV=staging,GIT_SHA=${{ github.sha }}
+            --set-env-vars=ENV=staging,GIT_SHA=${{ github.sha }},DATABASE_URL=${{ secrets.STAGING_DATABASE_URL }}
 
   deploy-production:
     if: github.event_name == 'workflow_dispatch'
@@ -112,4 +113,4 @@ jobs:
             --allow-unauthenticated \
             --max-instances 5 \
             --service-account=${{ secrets.DEPLOYER_SERVICE_ACCOUNT }} \
-            --set-env-vars=ENV=production,GIT_SHA=${{ github.sha }}
+            --set-env-vars=ENV=production,GIT_SHA=${{ github.sha }},DATABASE_URL=${{ secrets.PRODUCTION_DATABASE_URL }}
