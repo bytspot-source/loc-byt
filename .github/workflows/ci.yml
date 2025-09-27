@@ -78,6 +78,7 @@ jobs:
             --platform managed \
             --allow-unauthenticated \
             --max-instances 50 \
+            --service-account=${{ secrets.DEPLOYER_SERVICE_ACCOUNT }} \
             --set-env-vars=ENV=staging,GIT_SHA=${{ github.sha }}
 
   deploy-production:
@@ -101,4 +102,5 @@ jobs:
             --platform managed \
             --allow-unauthenticated \
             --max-instances 200 \
+            --service-account=${{ secrets.DEPLOYER_SERVICE_ACCOUNT }} \
             --set-env-vars=ENV=production,GIT_SHA=${{ github.sha }}
