@@ -121,7 +121,7 @@ jobs:
           if [ -z "$RUNTIME_SA" ]; then RUNTIME_SA="${{ secrets.DEPLOYER_SERVICE_ACCOUNT }}"; fi
           EXTRA_CSQL=""
           if [ -n "${{ secrets.CLOUDSQL_INSTANCE_PROD }}" ]; then EXTRA_CSQL="--add-cloudsql-instances ${{ secrets.CLOUDSQL_INSTANCE_PROD }}"; fi
-          SERVICE_URL=\$(gcloud run deploy bytspot-prod-auth-service \
+          SERVICE_URL=$(gcloud run deploy bytspot-prod-auth-service \
             --image "$IMAGE_URL" \
             --region ${{ env.REGION }} \
             --platform managed \
@@ -134,4 +134,4 @@ jobs:
           echo "service_url=$SERVICE_URL" >> $GITHUB_OUTPUT
       - name: Health Check
         run: |
-          curl -f -s "${{ steps.deploy_production.outputs.service_url }}/healthz"
+          curl -f -s "${{ steps.deploy_production.outputs.service_url }}/healthz"ervice_url }}/healthz"
