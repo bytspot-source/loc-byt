@@ -1,10 +1,11 @@
+---
 name: CI/CD
 
 on:
   pull_request:
-    branches: [ main ]
+    branches: [main]
   push:
-    branches: [ main ]
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -29,7 +30,8 @@ jobs:
         uses: aquasecurity/setup-trivy@v0.2.2
       - name: Build image (local)
         run: |
-          docker build -t auth-service:ci -f services/auth-service/Dockerfile . || echo "No auth-service Dockerfile yet"
+          docker build -t auth-service:ci \
+            -f services/auth-service/Dockerfile . || echo "No auth-service Dockerfile yet"
       - name: File scan (Trivy)
         run: trivy fs --exit-code 0 --severity HIGH,CRITICAL .
       - name: Image scan (Trivy)
@@ -58,7 +60,8 @@ jobs:
         run: |
           IMAGE_URL="${{ env.REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ env.AR_REPO }}/bytspot-auth-service:${{ github.sha }}"
           echo "sha=${{ github.sha }}" >> $GITHUB_OUTPUT
-          docker build -t "$IMAGE_URL" -f services/auth-service/Dockerfile .
+          docker build -t "$IMAGE_URL" \
+            -f services/auth-service/Dockerfile .
           docker push "$IMAGE_URL"
 
   deploy-staging:
@@ -83,7 +86,9 @@ jobs:
         run: |
           IMAGE_URL="${{ env.REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ env.AR_REPO }}/bytspot-auth-service:${{ needs.push-image.outputs.sha }}"
           EXTRA_CSQL=""
-          if [ -n "${{ secrets.CLOUDSQL_INSTANCE_STG }}" ]; then EXTRA_CSQL="--add-cloudsql-instances ${{ secrets.CLOUDSQL_INSTANCE_STG }}"; fi
+          if [ -n "${{ secrets.CLOUDSQL_INSTANCE_STG }}" ]; then
+            EXTRA_CSQL="--add-cloudsql-instances ${{ secrets.CLOUDSQL_INSTANCE_STG }}"
+          fi
           for i in 1 2 3; do
             SERVICE_URL=$(gcloud run deploy ${{ env.SERVICE_NAME }} \
               --image "$IMAGE_URL" \
@@ -122,7 +127,6 @@ jobs:
           fi
           exit 1
 
-
   deploy-production:
     if: github.event_name == 'workflow_dispatch'
     needs: push-image
@@ -147,7 +151,9 @@ jobs:
         run: |
           IMAGE_URL="${{ env.REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ env.AR_REPO }}/bytspot-auth-service:${{ needs.push-image.outputs.sha }}"
           EXTRA_CSQL=""
-          if [ -n "${{ secrets.CLOUDSQL_INSTANCE_PROD }}" ]; then EXTRA_CSQL="--add-cloudsql-instances ${{ secrets.CLOUDSQL_INSTANCE_PROD }}"; fi
+          if [ -n "${{ secrets.CLOUDSQL_INSTANCE_PROD }}" ]; then
+            EXTRA_CSQL="--add-cloudsql-instances ${{ secrets.CLOUDSQL_INSTANCE_PROD }}"
+          fi
           for i in 1 2 3; do
             SERVICE_URL=$(gcloud run deploy bytspot-prod-auth-service \
               --image "$IMAGE_URL" \
@@ -185,4 +191,3 @@ jobs:
             echo "No previous revision to roll back to."
           fi
           exit 1
-
