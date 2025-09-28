@@ -124,7 +124,7 @@ if (!globalThis.__vibeTicker) {
         io.to('insider:interest:venue').emit('vibe:update', payload);
         io.to('insider:interest:dining').emit('vibe:update', payload);
       });
-    } catch {}
+    } catch { /* ignore */ }
   }, 5000);
 }
 
@@ -376,7 +376,7 @@ app.post('/api/presence', async (req, reply) => {
   const expiry = now + Math.min(Math.max(b.ttlSec, 60), 600) * 1000;
   if (!globalThis.__presence) globalThis.__presence = new Map();
   globalThis.__presence.set(`${b.venueId}|${b.userId}`, expiry);
-  try { io.emit('presence:venue', { venueId: b.venueId, userId: b.userId, expiresAt: expiry }); } catch {}
+  try { io.emit('presence:venue', { venueId: b.venueId, userId: b.userId, expiresAt: expiry }); } catch { /* ignore */ }
   reply.send({ status: 'ok', expiresAt: expiry });
 });
 
@@ -502,7 +502,7 @@ app.post('/api/payments/webhook', async (req, reply) => {
       } catch (e) { req.log.error(e); }
       try {
         if (md.ticketId) io.emit('valet:task', { id: String(md.ticketId), status: 'paid', paidAt: Date.now() });
-      } catch {}
+      } catch { /* ignore */ }
     }
 
     reply.send({ received: true });
@@ -532,7 +532,7 @@ app.post('/api/valet/intake', async (req, reply) => {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(b)
     });
     const d = await r.json().catch(()=>({}));
-    try { io.emit('valet:task', { id: d.ticket || d.id, status: 'intake', ...d }); } catch {}
+    try { io.emit('valet:task', { id: d.ticket || d.id, status: 'intake', ...d }); } catch { /* ignore */ }
     reply.code(r.status).send(d);
   } catch (e) {
     req.log.error(e);
@@ -548,7 +548,7 @@ app.patch('/api/valet/vehicles/:id/status', async (req, reply) => {
       method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(b)
     });
     const d = await r.json().catch(()=>({ id, ...b }));
-    try { io.emit('valet:task', { id: d.id || id, status: d.status || b.status, ...d }); } catch {}
+    try { io.emit('valet:task', { id: d.id || id, status: d.status || b.status, ...d }); } catch { /* ignore */ }
     reply.code(r.status).send(d);
   } catch (e) {
     req.log.error(e);
@@ -708,9 +708,5 @@ if (process.env.NODE_ENV !== 'test') {
 // Make app/io available to tests without ESM export
 // (Vitest/Vite transform may treat this file as CJS in some setups)
 // Tests can access via globalThis.__bff_app and globalThis.__bff_io after importing this module.
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
 globalThis.__bff_app = app;
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
 globalThis.__bff_io = io;
