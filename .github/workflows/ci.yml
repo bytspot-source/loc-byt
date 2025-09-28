@@ -37,10 +37,10 @@ jobs:
 
   push-image:
     needs: build-test-scan
-    if: github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main'
+    if: github.event_name == 'workflow_dispatch' or github.ref == 'refs/heads/main'
     runs-on: ubuntu-22.04
     outputs:
-      image_url: ${{ steps.push.outputs.image_url }}
+      sha: ${{ steps.push.outputs.sha }}
     steps:
       - uses: actions/checkout@v4
       - name: Auth to GCP (Workload Identity Federation)
@@ -57,7 +57,7 @@ jobs:
         name: Build & push API image
         run: |
           IMAGE_URL="${{ env.REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ env.AR_REPO }}/bytspot-auth-service:${{ github.sha }}"
-          echo "image_url=$IMAGE_URL" >> $GITHUB_OUTPUT
+          echo "sha=${{ github.sha }}" >> $GITHUB_OUTPUT
           docker build -t "$IMAGE_URL" -f services/auth-service/Dockerfile .
           docker push "$IMAGE_URL"
 
@@ -78,7 +78,7 @@ jobs:
       - name: Deploy to Cloud Run (staging)
         id: deploy_staging
         run: |
-          IMAGE_URL=${{ needs.push-image.outputs.image_url }}
+          IMAGE_URL="${{ env.REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ env.AR_REPO }}/bytspot-auth-service:${{ needs.push-image.outputs.sha }}"
           EXTRA_CSQL=""
           if [ -n "${{ secrets.CLOUDSQL_INSTANCE_STG }}" ]; then EXTRA_CSQL="--add-cloudsql-instances ${{ secrets.CLOUDSQL_INSTANCE_STG }}"; fi
           SERVICE_URL=$(gcloud run deploy ${{ env.SERVICE_NAME }} \
@@ -89,7 +89,7 @@ jobs:
             --max-instances 2 \
             --service-account="${{ secrets.RUNTIME_SERVICE_ACCOUNT_STG }}" \
             $EXTRA_CSQL \
-            --set-env-vars=ENV=staging,GIT_SHA=${{ github.sha }},DATABASE_URL=${{ secrets.STAGING_DATABASE_URL }} \
+            --set-env-vars=ENV=staging,GIT_SHA=${{ needs.push-image.outputs.sha }},DATABASE_URL=${{ secrets.STAGING_DATABASE_URL }} \
             --format='value(status.url)')
           echo "service_url=$SERVICE_URL" >> $GITHUB_OUTPUT
       - name: Health Check
@@ -115,7 +115,7 @@ jobs:
       - name: Promote image and deploy (manual)
         id: deploy_production
         run: |
-          IMAGE_URL=${{ needs.push-image.outputs.image_url }}
+          IMAGE_URL="${{ env.REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ env.AR_REPO }}/bytspot-auth-service:${{ needs.push-image.outputs.sha }}"
           EXTRA_CSQL=""
           if [ -n "${{ secrets.CLOUDSQL_INSTANCE_PROD }}" ]; then EXTRA_CSQL="--add-cloudsql-instances ${{ secrets.CLOUDSQL_INSTANCE_PROD }}"; fi
           SERVICE_URL=$(gcloud run deploy bytspot-prod-auth-service \
@@ -126,7 +126,7 @@ jobs:
             --max-instances 5 \
             --service-account="${{ secrets.RUNTIME_SERVICE_ACCOUNT_PROD }}" \
             $EXTRA_CSQL \
-            --set-env-vars=ENV=production,GIT_SHA=${{ github.sha }},DATABASE_URL='${{ secrets.PRODUCTION_DATABASE_URL }}' \
+            --set-env-vars=ENV=production,GIT_SHA=${{ needs.push-image.outputs.sha }},DATABASE_URL='${{ secrets.PRODUCTION_DATABASE_URL }}' \
             --format='value(status.url)')
           echo "service_url=$SERVICE_URL" >> $GITHUB_OUTPUT
       - name: Health Check
