@@ -96,7 +96,7 @@ jobs:
           echo "service_url=$SERVICE_URL" >> $GITHUB_OUTPUT
       - name: Health Check
         run: |
-          curl -f -s "${{ steps.deploy_staging.outputs.service_url }}"
+          curl -f -s "${{ steps.deploy_staging.outputs.service_url }}/healthz"
 
   deploy-production:
     if: github.event_name == 'workflow_dispatch'
@@ -135,4 +135,4 @@ jobs:
           echo "service_url=$SERVICE_URL" >> $GITHUB_OUTPUT
       - name: Health Check
         run: |
-          curl -f -s "${{ steps.deploy_production.outputs.service_url }}"
+          curl -f -s "${{ steps.deploy_production.outputs.service_url }}/healthz"
