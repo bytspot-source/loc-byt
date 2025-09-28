@@ -83,7 +83,7 @@ jobs:
           if [ -z "$RUNTIME_SA" ]; then RUNTIME_SA="${{ secrets.DEPLOYER_SERVICE_ACCOUNT }}"; fi
           EXTRA_CSQL=""
           if [ -n "${{ secrets.CLOUDSQL_INSTANCE_STG }}" ]; then EXTRA_CSQL="--add-cloudsql-instances ${{ secrets.CLOUDSQL_INSTANCE_STG }}"; fi
-          SERVICE_URL=$(gcloud run deploy ${{ env.SERVICE_NAME }} \
+          gcloud run deploy ${{ env.SERVICE_NAME }} \
             --image "$IMAGE_URL" \
             --region ${{ env.REGION }} \
             --platform managed \
@@ -92,8 +92,7 @@ jobs:
             --service-account="$RUNTIME_SA" \
             $EXTRA_CSQL \
             --set-env-vars=ENV=staging,GIT_SHA=${{ github.sha }},DATABASE_URL=${{ secrets.STAGING_DATABASE_URL }} \
-            --format='value(status.url)')
-          echo "service_url=$SERVICE_URL" >> $GITHUB_OUTPUT
+            --format='value(status.url)' | xargs -I {} echo "service_url={}" >> $GITHUB_OUTPUT
       - name: Health Check
         run: |
           curl -f -s "${{ steps.deploy_staging.outputs.service_url }}/healthz"
@@ -112,7 +111,7 @@ jobs:
       - uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}
-          service_account: ${{ secrets.DEPLOYER_SERVICE_ACCOUNT }}
+          service_account: ${{ secrets.PRODUCTION_DEPLOYER_SERVICE_ACCOUNT }}
       - uses: google-github-actions/setup-gcloud@v2
       - name: Promote image and deploy (manual)
         id: deploy_production
@@ -122,7 +121,7 @@ jobs:
           if [ -z "$RUNTIME_SA" ]; then RUNTIME_SA="${{ secrets.DEPLOYER_SERVICE_ACCOUNT }}"; fi
           EXTRA_CSQL=""
           if [ -n "${{ secrets.CLOUDSQL_INSTANCE_PROD }}" ]; then EXTRA_CSQL="--add-cloudsql-instances ${{ secrets.CLOUDSQL_INSTANCE_PROD }}"; fi
-          SERVICE_URL=$(gcloud run deploy bytspot-prod-auth-service \
+          SERVICE_URL=\$(gcloud run deploy bytspot-prod-auth-service \
             --image "$IMAGE_URL" \
             --region ${{ env.REGION }} \
             --platform managed \
