@@ -10,6 +10,9 @@ servers:
 tags:
   - name: valet
 
+security:
+  - bearerAuth: []
+
 paths:
   /valet/intake:
     post:
@@ -83,6 +86,11 @@ paths:
         '204': { description: Payment marked (no body) }
 
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
   schemas:
     Vehicle:
       type: object

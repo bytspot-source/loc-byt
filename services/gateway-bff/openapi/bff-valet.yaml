@@ -13,6 +13,9 @@ tags:
   - name: valet
     description: Valet flows via the BFF
 
+security:
+  - bearerAuth: []
+
 paths:
   /api/valet/intake:
     post:
@@ -127,6 +130,11 @@ paths:
                   value: { error: 'stripe not configured' }
 
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
   schemas:
     Vehicle:
       type: object
