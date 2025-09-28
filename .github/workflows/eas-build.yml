@@ -2,10 +2,11 @@ name: EAS Build (Staging)
 
 on:
   workflow_dispatch:
+  pull_request:
     paths:
       - 'apps/mobile/**'
   push:
-    branches: [ main, master ]
+    branches: [main, master]
     paths:
       - 'apps/mobile/**'
 
