@@ -3,8 +3,14 @@ name: CI/CD
 on:
   pull_request:
     branches: [ main ]
+    paths:
+      - 'docs/**'
+      - '.github/pages/**'
   push:
     branches: [ main ]
+    paths:
+      - 'docs/**'
+      - '.github/pages/**'
   workflow_dispatch:
 
 permissions:
