@@ -47,6 +47,8 @@ jobs:
           workload_identity_provider: ${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ secrets.DEPLOYER_SERVICE_ACCOUNT }}
       - uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
       - name: Configure Artifact Registry
         run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev -q
       - id: push
@@ -70,20 +72,35 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: image-url
-      - uses: google-github-actions/auth@v2
+      - name: Auth to GCP (Workload Identity Federation)
+        uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ secrets.DEPLOYER_SERVICE_ACCOUNT }}
       - uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
       - name: Deploy to Cloud Run (staging)
         id: deploy_staging
+        env:
+          IMAGE_URL: $(cat image_url.txt)
+          RUNTIME_SA: ${{ secrets.RUNTIME_SERVICE_ACCOUNT_STG }}
+          CLOUDSQL_INSTANCE: ${{ secrets.CLOUDSQL_INSTANCE_STG }}
+          DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
         run: |
-          IMAGE_URL=$(cat image_url.txt)
-          RUNTIME_SA="${{ secrets.RUNTIME_SERVICE_ACCOUNT_STG }}"
-          if [ -z "$RUNTIME_SA" ]; then RUNTIME_SA="${{ secrets.DEPLOYER_SERVICE_ACCOUNT }}"; fi
           EXTRA_CSQL=""
-          if [ -n "${{ secrets.CLOUDSQL_INSTANCE_STG }}" ]; then EXTRA_CSQL="--add-cloudsql-instances ${{ secrets.CLOUDSQL_INSTANCE_STG }}"; fi
-          echo "service_url=$(gcloud run deploy ${{ env.SERVICE_NAME }} --image \"$IMAGE_URL\" --region ${{ env.REGION }} --platform managed --allow-unauthenticated --max-instances 2 --service-account=\"$RUNTIME_SA\" $EXTRA_CSQL --set-env-vars=ENV=staging,GIT_SHA=${{ github.sha }},DATABASE_URL=${{ secrets.STAGING_DATABASE_URL }} --format='value(status.url)')" >> $GITHUB_OUTPUT
+          if [ -n "$CLOUDSQL_INSTANCE" ]; then EXTRA_CSQL="--add-cloudsql-instances $CLOUDSQL_INSTANCE"; fi
+          SERVICE_URL=$(gcloud run deploy ${{ env.SERVICE_NAME }} \
+            --image "$IMAGE_URL" \
+            --region ${{ env.REGION }} \
+            --platform managed \
+            --allow-unauthenticated \
+            --max-instances 2 \
+            --service-account="$RUNTIME_SA" \
+            $EXTRA_CSQL \
+            --set-env-vars=ENV=staging,GIT_SHA=${{ github.sha }},DATABASE_URL=$DATABASE_URL \
+            --format='value(status.url)')
+          echo "service_url=$SERVICE_URL" >> $GITHUB_OUTPUT
       - name: Health Check
         run: |
           curl -f -s "${{ steps.deploy_staging.outputs.service_url }}/healthz"
@@ -99,19 +116,24 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: image-url
-      - uses: google-github-actions/auth@v2
+      - name: Auth to GCP (Workload Identity Federation)
+        uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ secrets.PRODUCTION_DEPLOYER_SERVICE_ACCOUNT }}
       - uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
       - name: Promote image and deploy (manual)
         id: deploy_production
+        env:
+          IMAGE_URL: $(cat image_url.txt)
+          RUNTIME_SA: ${{ secrets.RUNTIME_SERVICE_ACCOUNT_PROD }}
+          CLOUDSQL_INSTANCE: ${{ secrets.CLOUDSQL_INSTANCE_PROD }}
+          DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
         run: |
-          IMAGE_URL=$(cat image_url.txt)
-          RUNTIME_SA="${{ secrets.RUNTIME_SERVICE_ACCOUNT_PROD }}"
-          if [ -z "$RUNTIME_SA" ]; then RUNTIME_SA="${{ secrets.DEPLOYER_SERVICE_ACCOUNT }}"; fi
           EXTRA_CSQL=""
-          if [ -n "${{ secrets.CLOUDSQL_INSTANCE_PROD }}" ]; then EXTRA_CSQL="--add-cloudsql-instances ${{ secrets.CLOUDSQL_INSTANCE_PROD }}"; fi
+          if [ -n "$CLOUDSQL_INSTANCE" ]; then EXTRA_CSQL="--add-cloudsql-instances $CLOUDSQL_INSTANCE"; fi
           SERVICE_URL=$(gcloud run deploy bytspot-prod-auth-service \
             --image "$IMAGE_URL" \
             --region ${{ env.REGION }} \
@@ -120,9 +142,9 @@ jobs:
             --max-instances 5 \
             --service-account="$RUNTIME_SA" \
             $EXTRA_CSQL \
-            --set-env-vars=ENV=production,GIT_SHA=${{ github.sha }},DATABASE_URL='${{ secrets.PRODUCTION_DATABASE_URL }}' \
+            --set-env-vars=ENV=production,GIT_SHA=${{ github.sha }},DATABASE_URL=$DATABASE_URL \
             --format='value(status.url)')
           echo "service_url=$SERVICE_URL" >> $GITHUB_OUTPUT
       - name: Health Check
         run: |
-          curl -f -s "${{ steps.deploy_production.outputs.service_url }}/healthz"ervice_url }}/healthz"
+          curl -f -s "${{ steps.deploy_production.outputs.service_url }}/healthz"
