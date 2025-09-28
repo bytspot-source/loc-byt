@@ -32,12 +32,14 @@ func (s *serverImpl) PostParkingReservations(w http.ResponseWriter, r *http.Requ
 	json.NewEncoder(w).Encode(map[string]any{"status":"reserved", "id":"r1"})
 }
 
-func (s *serverImpl) GetParkingReservationsId(w http.ResponseWriter, r *http.Request, id string) {
+func (s *serverImpl) GetParkingReservationsId(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]any{"id": id, "status":"reserved"})
 }
 
-func (s *serverImpl) PatchParkingReservationsIdCheckin(w http.ResponseWriter, r *http.Request, id string) {
+func (s *serverImpl) PatchParkingReservationsIdCheckin(w http.ResponseWriter, r *http.Request) {
+	_ = chi.URLParam(r, "id") // id is available if needed
 	w.WriteHeader(http.StatusNoContent)
 }
 
