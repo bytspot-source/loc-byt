@@ -1,6 +1,8 @@
+---
+
 name: EAS Release (Production)
 
-on:
+'on':
   push:
     tags:
       - 'v*'
@@ -33,12 +35,23 @@ jobs:
       - name: Export analytics env (production)
         run: |
           echo "EXPO_PUBLIC_ANALYTICS_PROVIDER=posthog" >> $GITHUB_ENV
-          if [ -n "${{ secrets.POSTHOG_KEY_PRODUCTION }}" ]; then echo "EXPO_PUBLIC_POSTHOG_KEY=${{ secrets.POSTHOG_KEY_PRODUCTION }}" >> $GITHUB_ENV; fi
-          if [ -n "${{ secrets.POSTHOG_HOST_PRODUCTION }}" ]; then echo "EXPO_PUBLIC_POSTHOG_HOST=${{ secrets.POSTHOG_HOST_PRODUCTION }}" >> $GITHUB_ENV; fi
+          if [ -n "${{ secrets.POSTHOG_KEY_PRODUCTION }}" ]; then
+            echo "EXPO_PUBLIC_POSTHOG_KEY=${{ secrets.POSTHOG_KEY_PRODUCTION }}" >> $GITHUB_ENV
+          fi
+          if [ -n "${{ secrets.POSTHOG_HOST_PRODUCTION }}" ]; then
+            echo "EXPO_PUBLIC_POSTHOG_HOST=${{ secrets.POSTHOG_HOST_PRODUCTION }}" >> $GITHUB_ENV
+          fi
       - name: Set EAS token
-        run: echo "EAS_TOKEN=${{ secrets.ORG_EXPO_TOKEN != '' && secrets.ORG_EXPO_TOKEN || secrets.EXPO_TOKEN }}" >> $GITHUB_ENV
+        run: |
+          if [ -n "${{ secrets.ORG_EXPO_TOKEN }}" ]; then
+            echo "EAS_TOKEN=${{ secrets.ORG_EXPO_TOKEN }}" >> $GITHUB_ENV
+          else
+            echo "EAS_TOKEN=${{ secrets.EXPO_TOKEN }}" >> $GITHUB_ENV
+          fi
       - name: EAS login
-        run: npx -y eas-cli@latest whoami || npx -y eas-cli@latest login --token "$EAS_TOKEN"
+        run: |
+          npx -y eas-cli@latest whoami || \
+            npx -y eas-cli@latest login --token "$EAS_TOKEN"
       - name: Build Android (production)
         run: npx -y eas-cli@latest build --platform android --profile production --non-interactive
 
@@ -59,12 +72,23 @@ jobs:
       - name: Export analytics env (production)
         run: |
           echo "EXPO_PUBLIC_ANALYTICS_PROVIDER=posthog" >> $GITHUB_ENV
-          if [ -n "${{ secrets.POSTHOG_KEY_PRODUCTION }}" ]; then echo "EXPO_PUBLIC_POSTHOG_KEY=${{ secrets.POSTHOG_KEY_PRODUCTION }}" >> $GITHUB_ENV; fi
-          if [ -n "${{ secrets.POSTHOG_HOST_PRODUCTION }}" ]; then echo "EXPO_PUBLIC_POSTHOG_HOST=${{ secrets.POSTHOG_HOST_PRODUCTION }}" >> $GITHUB_ENV; fi
+          if [ -n "${{ secrets.POSTHOG_KEY_PRODUCTION }}" ]; then
+            echo "EXPO_PUBLIC_POSTHOG_KEY=${{ secrets.POSTHOG_KEY_PRODUCTION }}" >> $GITHUB_ENV
+          fi
+          if [ -n "${{ secrets.POSTHOG_HOST_PRODUCTION }}" ]; then
+            echo "EXPO_PUBLIC_POSTHOG_HOST=${{ secrets.POSTHOG_HOST_PRODUCTION }}" >> $GITHUB_ENV
+          fi
       - name: Set EAS token
-        run: echo "EAS_TOKEN=${{ secrets.ORG_EXPO_TOKEN != '' && secrets.ORG_EXPO_TOKEN || secrets.EXPO_TOKEN }}" >> $GITHUB_ENV
+        run: |
+          if [ -n "${{ secrets.ORG_EXPO_TOKEN }}" ]; then
+            echo "EAS_TOKEN=${{ secrets.ORG_EXPO_TOKEN }}" >> $GITHUB_ENV
+          else
+            echo "EAS_TOKEN=${{ secrets.EXPO_TOKEN }}" >> $GITHUB_ENV
+          fi
       - name: EAS login
-        run: npx -y eas-cli@latest whoami || npx -y eas-cli@latest login --token "$EAS_TOKEN"
+        run: |
+          npx -y eas-cli@latest whoami || \
+            npx -y eas-cli@latest login --token "$EAS_TOKEN"
       - name: Build iOS (production)
         run: npx -y eas-cli@latest build --platform ios --profile production --non-interactive
 
@@ -81,9 +105,16 @@ jobs:
         with:
           node-version: 20
       - name: Set EAS token
-        run: echo "EAS_TOKEN=${{ secrets.ORG_EXPO_TOKEN != '' && secrets.ORG_EXPO_TOKEN || secrets.EXPO_TOKEN }}" >> $GITHUB_ENV
+        run: |
+          if [ -n "${{ secrets.ORG_EXPO_TOKEN }}" ]; then
+            echo "EAS_TOKEN=${{ secrets.ORG_EXPO_TOKEN }}" >> $GITHUB_ENV
+          else
+            echo "EAS_TOKEN=${{ secrets.EXPO_TOKEN }}" >> $GITHUB_ENV
+          fi
       - name: EAS login
-        run: npx -y eas-cli@latest whoami || npx -y eas-cli@latest login --token "$EAS_TOKEN"
+        run: |
+          npx -y eas-cli@latest whoami || \
+            npx -y eas-cli@latest login --token "$EAS_TOKEN"
       - name: Submit Android to Play (production)
         run: npx -y eas-cli@latest submit --platform android --profile production --non-interactive
 
@@ -100,8 +131,15 @@ jobs:
         with:
           node-version: 20
       - name: Set EAS token
-        run: echo "EAS_TOKEN=${{ secrets.ORG_EXPO_TOKEN != '' && secrets.ORG_EXPO_TOKEN || secrets.EXPO_TOKEN }}" >> $GITHUB_ENV
+        run: |
+          if [ -n "${{ secrets.ORG_EXPO_TOKEN }}" ]; then
+            echo "EAS_TOKEN=${{ secrets.ORG_EXPO_TOKEN }}" >> $GITHUB_ENV
+          else
+            echo "EAS_TOKEN=${{ secrets.EXPO_TOKEN }}" >> $GITHUB_ENV
+          fi
       - name: EAS login
-        run: npx -y eas-cli@latest whoami || npx -y eas-cli@latest login --token "$EAS_TOKEN"
+        run: |
+          npx -y eas-cli@latest whoami || \
+            npx -y eas-cli@latest login --token "$EAS_TOKEN"
       - name: Submit iOS to App Store Connect (production)
         run: npx -y eas-cli@latest submit --platform ios --profile production --non-interactive
