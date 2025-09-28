@@ -1,6 +1,7 @@
+---
 name: EAS Release (Production)
 
-on:
+'on':
   push:
     tags:
       - 'v*'
@@ -99,4 +100,3 @@ jobs:
         run: npx -y eas-cli@latest whoami || npx -y eas-cli@latest login --token "$EAS_TOKEN"
       - name: Submit iOS to App Store Connect (production)
         run: npx -y eas-cli@latest submit --platform ios --profile production --non-interactive
-
