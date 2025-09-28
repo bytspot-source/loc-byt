@@ -24,7 +24,7 @@ services:
     environment:
       - PORT=8090
       - JWT_SECRET=dev_secret_change_me
-      - DATABASE_URL=postgres://postgres:postgres@postgres:5432/bytspot?sslmode=disable
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/bytspot?sslmode=disable
     depends_on:
       postgres:
         condition: service_healthy

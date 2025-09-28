@@ -57,7 +57,7 @@
       "scripts": {
             "dev:web": "vite",
             "build": "vite build",
-            "dev:auth": "cross-env PORT=8090 MIGRATIONS_DIR=./migrations JWT_SECRET=dev_secret_change_me DEV_ENABLE_ADMIN_PROMOTE=true DATABASE_URL=postgres://postgres:postgres@localhost:5432/bytspot?sslmode=disable go run ./services/auth-service/cmd/auth-service",
+            "dev:auth": "cross-env PORT=8090 MIGRATIONS_DIR=./migrations JWT_SECRET=dev_secret_change_me DEV_ENABLE_ADMIN_PROMOTE=true DATABASE_URL=postgresql://postgres:postgres@localhost:5432/bytspot?sslmode=disable go run ./services/auth-service/cmd/auth-service",
             "dev:venue": "go run ./services/venue-service/cmd/venue-service",
             "dev:bff": "cross-env PORT=3001 AUTH_SERVICE_URL=http://localhost:8090 VENUE_SERVICE_URL=http://localhost:8092 JWT_SECRET=dev_secret_change_me node services/gateway-bff/server.js",
             "dev:stack": "concurrently -k -n WEB,AUTH,VENUE,BFF -c blue,green,magenta,yellow \"npm:dev:web\" \"npm:dev:auth\" \"npm:dev:venue\" \"npm:dev:bff\"",
