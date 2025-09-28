@@ -78,13 +78,18 @@ jobs:
       - name: Deploy to Cloud Run (staging)
         run: |
           IMAGE_URL=$(cat image_url.txt)
+          RUNTIME_SA="${{ secrets.RUNTIME_SERVICE_ACCOUNT_STG }}"
+          if [ -z "$RUNTIME_SA" ]; then RUNTIME_SA="${{ secrets.DEPLOYER_SERVICE_ACCOUNT }}"; fi
+          EXTRA_CSQL=""
+          if [ -n "${{ secrets.CLOUDSQL_INSTANCE_STG }}" ]; then EXTRA_CSQL="--add-cloudsql-instances ${{ secrets.CLOUDSQL_INSTANCE_STG }}"; fi
           gcloud run deploy ${{ env.SERVICE_NAME }} \
             --image "$IMAGE_URL" \
             --region ${{ env.REGION }} \
             --platform managed \
             --allow-unauthenticated \
             --max-instances 2 \
-            --service-account=${{ secrets.DEPLOYER_SERVICE_ACCOUNT }} \
+            --service-account="$RUNTIME_SA" \
+            $EXTRA_CSQL \
             --set-env-vars=ENV=staging,GIT_SHA=${{ github.sha }},DATABASE_URL=${{ secrets.STAGING_DATABASE_URL }}
 
   deploy-production:
@@ -106,11 +111,16 @@ jobs:
       - name: Promote image and deploy (manual)
         run: |
           IMAGE_URL=$(cat image_url.txt)
+          RUNTIME_SA="${{ secrets.RUNTIME_SERVICE_ACCOUNT_PROD }}"
+          if [ -z "$RUNTIME_SA" ]; then RUNTIME_SA="${{ secrets.DEPLOYER_SERVICE_ACCOUNT }}"; fi
+          EXTRA_CSQL=""
+          if [ -n "${{ secrets.CLOUDSQL_INSTANCE_PROD }}" ]; then EXTRA_CSQL="--add-cloudsql-instances ${{ secrets.CLOUDSQL_INSTANCE_PROD }}"; fi
           gcloud run deploy bytspot-prod-auth-service \
             --image "$IMAGE_URL" \
             --region ${{ env.REGION }} \
             --platform managed \
             --allow-unauthenticated \
             --max-instances 5 \
-            --service-account=${{ secrets.DEPLOYER_SERVICE_ACCOUNT }} \
+            --service-account="$RUNTIME_SA" \
+            $EXTRA_CSQL \
             --set-env-vars=ENV=production,GIT_SHA=${{ github.sha }},DATABASE_URL=${{ secrets.PRODUCTION_DATABASE_URL }}
