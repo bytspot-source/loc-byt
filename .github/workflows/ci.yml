@@ -37,7 +37,10 @@ jobs:
 
   push-image:
     needs: build-test-scan
-    if: github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main'
+    if: (github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main') &&
+        secrets.WORKLOAD_IDENTITY_PROVIDER != '' &&
+        secrets.DEPLOYER_SERVICE_ACCOUNT != '' &&
+        secrets.GCP_PROJECT_ID != ''
     runs-on: ubuntu-22.04
     outputs:
       sha: ${{ steps.push.outputs.sha }}
@@ -63,12 +66,16 @@ jobs:
 
   deploy-staging:
     needs: push-image
+    if: secrets.WORKLOAD_IDENTITY_PROVIDER != '' &&
+        secrets.DEPLOYER_SERVICE_ACCOUNT != '' &&
+        secrets.GCP_PROJECT_ID != '' &&
+        secrets.RUNTIME_SERVICE_ACCOUNT_STG != '' &&
+        secrets.STAGING_DATABASE_URL != ''
     concurrency:
       group: loc-byt-${{ env.SERVICE_NAME }}-stg
       cancel-in-progress: true
     runs-on: ubuntu-22.04
-    environment:
-      name: staging
+    environment: staging
     steps:
       - name: Auth to GCP (Workload Identity Federation)
         uses: google-github-actions/auth@v2
@@ -106,7 +113,7 @@ jobs:
           URL="${{ steps.deploy_staging.outputs.service_url }}"
           echo "Checking $URL/health"
           for i in 1 2 3; do
-            if curl -fsS --max-time 5 "$URL/health"; then
+            if curl -fsS --max-time 5 "$URL/health" || curl -fsS --max-time 5 "$URL/healthz"; then
               echo "Health OK"
               exit 0
             fi
@@ -124,7 +131,12 @@ jobs:
 
 
   deploy-production:
-    if: github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch' &&
+        secrets.WORKLOAD_IDENTITY_PROVIDER != '' &&
+        secrets.PRODUCTION_DEPLOYER_SERVICE_ACCOUNT != '' &&
+        secrets.GCP_PROJECT_ID != '' &&
+        secrets.RUNTIME_SERVICE_ACCOUNT_PROD != '' &&
+        secrets.PRODUCTION_DATABASE_URL != ''
     needs: push-image
     concurrency:
       group: loc-byt-bytspot-prod-auth-service-prod
@@ -170,7 +182,7 @@ jobs:
           URL="${{ steps.deploy_production.outputs.service_url }}"
           echo "Checking $URL/health"
           for i in 1 2 3; do
-            if curl -fsS --max-time 5 "$URL/health"; then
+            if curl -fsS --max-time 5 "$URL/health" || curl -fsS --max-time 5 "$URL/healthz"; then
               echo "Health OK"
               exit 0
             fi
