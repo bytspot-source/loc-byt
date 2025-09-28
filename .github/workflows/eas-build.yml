@@ -2,12 +2,12 @@ name: EAS Build (Staging)
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [main, master]
     paths:
       - 'apps/mobile/**'
       - '.github/workflows/eas-build.yml'
   pull_request:
-    branches: [ main ]
+    branches: [main]
     paths:
       - 'apps/mobile/**'
       - '.github/workflows/eas-build.yml'
@@ -69,4 +69,3 @@ jobs:
         run: npx -y eas-cli@latest whoami || npx -y eas-cli@latest login --token "$EAS_TOKEN"
       - name: EAS iOS staging build
         run: npx -y eas-cli@latest build --platform ios --profile staging --non-interactive
-

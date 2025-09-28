@@ -4,12 +4,12 @@ on:
   push:
     tags:
       - 'v*'
-    branches: [ main, master ]
+    branches: [main, master]
     paths:
       - 'apps/mobile/**'
       - '.github/workflows/eas-release.yml'
   pull_request:
-    branches: [ main ]
+    branches: [main]
     paths:
       - 'apps/mobile/**'
       - '.github/workflows/eas-release.yml'
@@ -105,4 +105,3 @@ jobs:
         run: npx -y eas-cli@latest whoami || npx -y eas-cli@latest login --token "$EAS_TOKEN"
       - name: Submit iOS to App Store Connect (production)
         run: npx -y eas-cli@latest submit --platform ios --profile production --non-interactive
-
