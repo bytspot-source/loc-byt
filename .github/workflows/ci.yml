@@ -130,7 +130,7 @@ jobs:
             --max-instances 5 \
             --service-account="$RUNTIME_SA" \
             $EXTRA_CSQL \
-            --set-env-vars=ENV=production,GIT_SHA=${{ github.sha }},DATABASE_URL=${{ secrets.PRODUCTION_DATABASE_URL }} \
+            --set-env-vars=ENV=production,GIT_SHA=${{ github.sha }},DATABASE_URL='${{ secrets.PRODUCTION_DATABASE_URL }}' \
             --format='value(status.url)')
           echo "service_url=$SERVICE_URL" >> $GITHUB_OUTPUT
       - name: Health Check
