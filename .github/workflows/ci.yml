@@ -83,16 +83,7 @@ jobs:
           if [ -z "$RUNTIME_SA" ]; then RUNTIME_SA="${{ secrets.DEPLOYER_SERVICE_ACCOUNT }}"; fi
           EXTRA_CSQL=""
           if [ -n "${{ secrets.CLOUDSQL_INSTANCE_STG }}" ]; then EXTRA_CSQL="--add-cloudsql-instances ${{ secrets.CLOUDSQL_INSTANCE_STG }}"; fi
-          gcloud run deploy ${{ env.SERVICE_NAME }} \
-            --image "$IMAGE_URL" \
-            --region ${{ env.REGION }} \
-            --platform managed \
-            --allow-unauthenticated \
-            --max-instances 2 \
-            --service-account="$RUNTIME_SA" \
-            $EXTRA_CSQL \
-            --set-env-vars=ENV=staging,GIT_SHA=${{ github.sha }},DATABASE_URL=${{ secrets.STAGING_DATABASE_URL }} \
-            --format='value(status.url)' | xargs -I {} echo "service_url={}" >> $GITHUB_OUTPUT
+          echo "service_url=$(gcloud run deploy ${{ env.SERVICE_NAME }} --image \"$IMAGE_URL\" --region ${{ env.REGION }} --platform managed --allow-unauthenticated --max-instances 2 --service-account=\"$RUNTIME_SA\" $EXTRA_CSQL --set-env-vars=ENV=staging,GIT_SHA=${{ github.sha }},DATABASE_URL=${{ secrets.STAGING_DATABASE_URL }} --format='value(status.url)')" >> $GITHUB_OUTPUT
       - name: Health Check
         run: |
           curl -f -s "${{ steps.deploy_staging.outputs.service_url }}/healthz"
