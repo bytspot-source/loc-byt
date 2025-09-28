@@ -67,8 +67,7 @@ jobs:
       group: loc-byt-${{ env.SERVICE_NAME }}-stg
       cancel-in-progress: true
     runs-on: ubuntu-22.04
-    environment:
-      name: staging
+    environment: staging
     steps:
       - name: Auth to GCP (Workload Identity Federation)
         uses: google-github-actions/auth@v2
@@ -130,9 +129,7 @@ jobs:
       group: loc-byt-bytspot-prod-auth-service-prod
       cancel-in-progress: true
     runs-on: ubuntu-22.04
-    environment:
-      name: production
-      url: https://api.bytspot.com
+    environment: production
     steps:
       - name: Auth to GCP (Workload Identity Federation)
         uses: google-github-actions/auth@v2
